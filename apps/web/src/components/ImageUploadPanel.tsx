@@ -6,6 +6,7 @@ type Props = {
 export default function ImageUploadPanel({ onSubmit, disabled }: Props) {
   return (
     <form
+      className="panel-form"
       onSubmit={async (event) => {
         event.preventDefault();
         const target = event.currentTarget;
@@ -15,9 +16,9 @@ export default function ImageUploadPanel({ onSubmit, disabled }: Props) {
         await onSubmit(file);
       }}
     >
-      <label htmlFor="image-file">Image</label>
+      <label htmlFor="image-file">选择图片</label>
       <input id="image-file" name="image_file" type="file" accept="image/*" />
-      <button type="submit" disabled={disabled}>Detect Image</button>
+      <button type="submit" disabled={disabled}>开始图片检测</button>
     </form>
   );
 }

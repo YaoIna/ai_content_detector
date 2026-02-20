@@ -62,8 +62,11 @@
 - `apps/web/package.json`: Web package scripts and dependencies.
 - `apps/web/tsconfig.json`: TypeScript config for React app/tests.
 - `apps/web/vite.config.ts`: Vite + Vitest config for frontend.
+- `apps/web/index.html`: Vite HTML entry that mounts the React root container.
 
+- `apps/web/src/main.tsx`: React client entrypoint that mounts `<App />` to `#root`.
 - `apps/web/src/App.tsx`: main UI container and detect flow orchestration.
+- `apps/web/src/App.css`: editorial-style page layout, color system, motion, and responsive UI rules.
 - `apps/web/src/App.test.tsx`: base render/content test for UI shell.
 - `apps/web/src/test-setup.ts`: test environment setup (`jest-dom` matchers).
 
