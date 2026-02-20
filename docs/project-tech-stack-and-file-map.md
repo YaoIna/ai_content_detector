@@ -39,7 +39,8 @@
 
 - `apps/api/src/providers/types.ts`: provider interface/contracts.
 - `apps/api/src/providers/fake-provider.ts`: fake text/image detection provider implementation.
-- `apps/api/src/providers/index.ts`: provider resolver and provider invocation helpers.
+- `apps/api/src/providers/hive-provider.ts`: Hive provider skeleton with API-key validation and placeholder calls.
+- `apps/api/src/providers/index.ts`: provider resolver, switching logic for fake/hive providers, and config-based provider factory.
 
 - `apps/api/src/services/text-detect-service.ts`: text detection service flow + explanation mapping.
 - `apps/api/src/services/image-detect-service.ts`: image detection flow + temp file cleanup.

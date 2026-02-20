@@ -1,6 +1,7 @@
 import Fastify from 'fastify';
 import multipart from '@fastify/multipart';
 import type { DetectProvider } from './providers/types';
+import { createProviderFromConfig, type ProviderKind } from './providers';
 import { mapError } from './errors/api-error';
 import { registerRateLimit } from './plugins/rate-limit';
 import { textDetectSchema } from './schemas/detect';
@@ -11,8 +12,21 @@ type BuildAppOptions = {
   provider?: DetectProvider;
 };
 
+function envProviderKind(value: string | undefined): ProviderKind {
+  return value === 'hive' ? 'hive' : 'fake';
+}
+
+function providerFromEnv() {
+  return createProviderFromConfig({
+    textProvider: envProviderKind(process.env.TEXT_PROVIDER),
+    imageProvider: envProviderKind(process.env.IMAGE_PROVIDER),
+    hiveApiKey: process.env.HIVE_API_KEY
+  });
+}
+
 export function buildApp(options: BuildAppOptions = {}) {
   const app = Fastify();
+  const provider = options.provider ?? providerFromEnv();
 
   app.setErrorHandler((error, _request, reply) => {
     const mapped = mapError(error);
@@ -31,7 +45,7 @@ export function buildApp(options: BuildAppOptions = {}) {
       return reply.status(400).send({ error: 'Invalid input' });
     }
 
-    const result = await detectText(parsed.data.text, options.provider);
+    const result = await detectText(parsed.data.text, provider);
     return reply.send(result);
   });
 
@@ -43,7 +57,7 @@ export function buildApp(options: BuildAppOptions = {}) {
     }
 
     const buffer = await file.toBuffer();
-    const result = await detectImage(buffer, options.provider);
+    const result = await detectImage(buffer, provider);
     return reply.send(result);
   });
 
