@@ -1,0 +1,85 @@
+# Project Tech Stack And File Map
+
+## Maintenance Rule
+
+- After every completed task, update this file in the same commit.
+- Keep `Tech Stack` and `File Purposes` aligned with the latest code.
+
+## Tech Stack
+
+- Runtime: Node.js 18+
+- Package manager: pnpm (workspace monorepo)
+- Language: TypeScript
+- API: Fastify + multipart upload handling
+- Web: React + Vite
+- Testing: Vitest + Supertest + Testing Library + happy-dom
+
+## File Purposes
+
+### Root
+
+- `package.json`: monorepo root metadata and shared scripts.
+- `pnpm-workspace.yaml`: pnpm workspace package discovery config.
+- `pnpm-lock.yaml`: lockfile for reproducible installs.
+- `.env.example`: environment variable template for local setup.
+- `README.md`: project overview, setup, run/test instructions.
+
+### API App (`apps/api`)
+
+- `apps/api/package.json`: API package scripts and dependencies.
+- `apps/api/tsconfig.json`: TypeScript config for API source/tests.
+- `apps/api/vitest.config.ts`: Vitest config for API tests.
+
+- `apps/api/src/server.ts`: API process entrypoint (starts Fastify server).
+- `apps/api/src/app.ts`: app factory, route wiring, error handling, plugin registration.
+
+- `apps/api/src/errors/api-error.ts`: API error class and error-to-response mapper.
+- `apps/api/src/plugins/rate-limit.ts`: global in-memory rate-limiting hook.
+- `apps/api/src/schemas/detect.ts`: request payload validation schemas.
+
+- `apps/api/src/providers/types.ts`: provider interface/contracts.
+- `apps/api/src/providers/fake-provider.ts`: fake text/image detection provider implementation.
+- `apps/api/src/providers/index.ts`: provider resolver and provider invocation helpers.
+
+- `apps/api/src/services/text-detect-service.ts`: text detection service flow + explanation mapping.
+- `apps/api/src/services/image-detect-service.ts`: image detection flow + temp file cleanup.
+- `apps/api/src/services/explanation-service.ts`: probability-to-confidence mapping and user explanations.
+
+- `apps/api/tests/health.test.ts`: health endpoint test.
+- `apps/api/tests/schemas.test.ts`: schema validation behavior test.
+- `apps/api/tests/provider.test.ts`: provider output range normalization test.
+- `apps/api/tests/detect-text.test.ts`: text detection endpoint behavior test.
+- `apps/api/tests/detect-image.test.ts`: image detection endpoint behavior test.
+- `apps/api/tests/explanation-service.test.ts`: explanation generation test.
+- `apps/api/tests/privacy-cleanup.test.ts`: temporary artifact cleanup test.
+- `apps/api/tests/error-handling.test.ts`: rate-limit and error mapping test.
+- `apps/api/tests/integration-text.test.ts`: injected-provider integration test for text flow.
+- `apps/api/tests/integration-image.test.ts`: injected-provider integration test for image flow.
+- `apps/api/tests/fixtures/sample.jpg`: upload fixture for image endpoint tests.
+
+### Web App (`apps/web`)
+
+- `apps/web/package.json`: Web package scripts and dependencies.
+- `apps/web/tsconfig.json`: TypeScript config for React app/tests.
+- `apps/web/vite.config.ts`: Vite + Vitest config for frontend.
+
+- `apps/web/src/App.tsx`: main UI container and detect flow orchestration.
+- `apps/web/src/App.test.tsx`: base render/content test for UI shell.
+- `apps/web/src/test-setup.ts`: test environment setup (`jest-dom` matchers).
+
+- `apps/web/src/lib/api.ts`: frontend API client functions and result types.
+- `apps/web/src/components/TextInputPanel.tsx`: text submit form UI.
+- `apps/web/src/components/ImageUploadPanel.tsx`: image upload form UI.
+- `apps/web/src/components/ResultCard.tsx`: detection result and disclaimer display.
+
+### Shared Package (`packages/shared`)
+
+- `packages/shared/package.json`: shared package metadata.
+- `packages/shared/src/detect-contract.ts`: shared detection response contract types.
+
+### Documentation (`docs`)
+
+- `docs/api/openapi-notes.md`: API behavior/spec notes for V1 endpoints.
+- `docs/plans/2026-02-20-ai-content-detector-design.md`: approved product/system design.
+- `docs/plans/2026-02-20-ai-content-detector-implementation-plan.md`: step-by-step implementation plan.
+- `docs/project-tech-stack-and-file-map.md`: this document.
