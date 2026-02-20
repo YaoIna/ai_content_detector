@@ -5,4 +5,5 @@ export interface DetectProviderResult {
 
 export interface DetectProvider {
   detectText(input: string): Promise<DetectProviderResult>;
+  detectImage(input: Buffer): Promise<DetectProviderResult>;
 }
