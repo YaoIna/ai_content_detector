@@ -1,11 +1,12 @@
 import { detectTextWithProvider } from '../providers';
+import type { DetectProvider } from '../providers/types';
 import { buildExplanation } from './explanation-service';
 
-export async function detectText(input: string) {
+export async function detectText(input: string, provider?: DetectProvider) {
   let rawText = input;
 
   try {
-    const providerResult = await detectTextWithProvider(rawText);
+    const providerResult = await detectTextWithProvider(rawText, provider);
     const explanation = buildExplanation(providerResult);
 
     return {

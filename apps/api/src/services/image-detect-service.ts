@@ -3,9 +3,10 @@ import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { tmpdir } from 'node:os';
 import { detectImageWithProvider } from '../providers';
+import type { DetectProvider } from '../providers/types';
 import { buildExplanation } from './explanation-service';
 
-export async function processImageAndCleanup(input: Buffer) {
+export async function processImageAndCleanup(input: Buffer, provider?: DetectProvider) {
   const tempPath = path.join(tmpdir(), `ai-detector-${randomUUID()}.bin`);
 
   let cleaned = false;
@@ -15,7 +16,7 @@ export async function processImageAndCleanup(input: Buffer) {
   try {
     await fs.writeFile(tempPath, input);
 
-    const providerResult = await detectImageWithProvider(input);
+    const providerResult = await detectImageWithProvider(input, provider);
     aiProbability = providerResult.aiProbability;
     signals = providerResult.signals;
   } finally {
@@ -31,8 +32,8 @@ export async function processImageAndCleanup(input: Buffer) {
   };
 }
 
-export async function detectImage(input: Buffer) {
-  const processing = await processImageAndCleanup(input);
+export async function detectImage(input: Buffer, provider?: DetectProvider) {
+  const processing = await processImageAndCleanup(input, provider);
   const explanation = buildExplanation({
     aiProbability: processing.aiProbability,
     signals: processing.signals
