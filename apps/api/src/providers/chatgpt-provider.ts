@@ -6,6 +6,24 @@ type ChatgptProviderConfig = {
   model?: string;
 };
 
+type ParsedJudgeOutput = {
+  ai_probability?: number;
+  signals?: string[];
+};
+
+type ResponsesApiOutputItem = {
+  type?: string;
+  content?: Array<{
+    type?: string;
+    text?: string;
+  }>;
+};
+
+type ResponsesApiPayload = {
+  output_text?: string;
+  output?: ResponsesApiOutputItem[];
+};
+
 function requireChatgptApiKey(apiKey?: string) {
   if (!apiKey) {
     throw new Error('ChatGPT API key is required for chatgpt provider');
@@ -15,7 +33,9 @@ function requireChatgptApiKey(apiKey?: string) {
 function normalizeProbability(value: unknown): number {
   const numeric = typeof value === 'number' ? value : Number(value);
   if (!Number.isFinite(numeric)) return 50;
-  return Math.max(0, Math.min(100, Math.round(numeric)));
+
+  const normalized = numeric >= 0 && numeric <= 1 ? numeric * 100 : numeric;
+  return Math.max(0, Math.min(100, Math.round(normalized)));
 }
 
 function normalizeSignals(value: unknown): string[] {
@@ -27,6 +47,72 @@ function normalizeSignals(value: unknown): string[] {
 function formatUpstreamError(endpoint: string, status: number, bodyText: string) {
   const compact = bodyText.replace(/\s+/g, ' ').slice(0, 600);
   return `ChatGPT upstream error: POST ${endpoint} -> ${status}; body=${compact}`;
+}
+
+function logRawResponse(endpoint: string, status: number, bodyText: string) {
+  console.info(`[chatgpt][raw-response] endpoint=${endpoint} status=${status} body=${bodyText}`);
+}
+
+async function readAndLogRawResponse(response: Response, endpoint: string): Promise<string> {
+  const bodyText = await response.text();
+  logRawResponse(endpoint, response.status, bodyText);
+  return bodyText;
+}
+
+function stripJsonCodeFence(value: string): string {
+  const trimmed = value.trim();
+  const match = trimmed.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
+  return match ? match[1].trim() : trimmed;
+}
+
+function parseJudgeOutputJson(value: string): ParsedJudgeOutput {
+  const candidate = stripJsonCodeFence(value);
+
+  try {
+    return JSON.parse(candidate) as ParsedJudgeOutput;
+  } catch {
+    const objectLike = candidate.match(/\{[\s\S]*\}/)?.[0];
+    if (!objectLike) return {};
+
+    try {
+      return JSON.parse(objectLike) as ParsedJudgeOutput;
+    } catch {
+      return {};
+    }
+  }
+}
+
+function extractOutputText(payload: ResponsesApiPayload): string {
+  if (typeof payload.output_text === 'string' && payload.output_text.trim().length > 0) {
+    return payload.output_text;
+  }
+
+  if (!Array.isArray(payload.output)) return '{}';
+
+  for (const item of payload.output) {
+    if (!Array.isArray(item.content)) continue;
+
+    for (const content of item.content) {
+      if (content.type === 'output_text' && typeof content.text === 'string' && content.text.trim().length > 0) {
+        return content.text;
+      }
+    }
+  }
+
+  return '{}';
+}
+
+function parseDetectionFromRawPayload(rawPayload: string): ParsedJudgeOutput {
+  let payload: ResponsesApiPayload;
+
+  try {
+    payload = JSON.parse(rawPayload) as ResponsesApiPayload;
+  } catch {
+    return {};
+  }
+
+  const outputText = extractOutputText(payload);
+  return parseJudgeOutputJson(outputText);
 }
 
 export async function chatgptTextDetect(text: string, config: ChatgptProviderConfig): Promise<DetectProviderResult> {
@@ -62,14 +148,13 @@ export async function chatgptTextDetect(text: string, config: ChatgptProviderCon
     })
   });
 
+  const rawPayload = await readAndLogRawResponse(response, endpoint);
+
   if (!response.ok) {
-    const bodyText = await response.text();
-    throw new Error(formatUpstreamError(endpoint, response.status, bodyText));
+    throw new Error(formatUpstreamError(endpoint, response.status, rawPayload));
   }
 
-  const payload = (await response.json()) as { output_text?: string };
-  const raw = payload.output_text ?? '{}';
-  const parsed = JSON.parse(raw) as { ai_probability?: number; signals?: string[] };
+  const parsed = parseDetectionFromRawPayload(rawPayload);
 
   return {
     aiProbability: normalizeProbability(parsed.ai_probability),
@@ -117,14 +202,13 @@ export async function chatgptImageDetect(buffer: Buffer, config: ChatgptProvider
     })
   });
 
+  const rawPayload = await readAndLogRawResponse(response, endpoint);
+
   if (!response.ok) {
-    const bodyText = await response.text();
-    throw new Error(formatUpstreamError(endpoint, response.status, bodyText));
+    throw new Error(formatUpstreamError(endpoint, response.status, rawPayload));
   }
 
-  const payload = (await response.json()) as { output_text?: string };
-  const raw = payload.output_text ?? '{}';
-  const parsed = JSON.parse(raw) as { ai_probability?: number; signals?: string[] };
+  const parsed = parseDetectionFromRawPayload(rawPayload);
 
   return {
     aiProbability: normalizeProbability(parsed.ai_probability),

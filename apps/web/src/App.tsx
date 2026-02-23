@@ -61,6 +61,12 @@ export default function App() {
 
         <aside className="result-column reveal delay-2">
           <h2>检测报告</h2>
+          {loading ? (
+            <div className="result-loading" role="status" aria-live="polite">
+              <span className="loading-dot" aria-hidden="true" />
+              <p>正在检测中...</p>
+            </div>
+          ) : null}
           <ResultCard result={result} />
         </aside>
       </section>

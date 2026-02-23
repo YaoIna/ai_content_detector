@@ -42,7 +42,7 @@
 - `apps/api/src/providers/types.ts`: provider interface/contracts.
 - `apps/api/src/providers/fake-provider.ts`: fake text/image detection provider implementation.
 - `apps/api/src/providers/hive-provider.ts`: Hive provider skeleton with API-key validation and placeholder calls.
-- `apps/api/src/providers/chatgpt-provider.ts`: ChatGPT-based text/image judging provider for prototype detection results.
+- `apps/api/src/providers/chatgpt-provider.ts`: ChatGPT-based text/image judging provider for prototype detection results, including raw upstream response logging, robust parsing for both `output_text` and `output[].content[].text` shapes, and decimal probability normalization (`0.9` -> `90`).
 - `apps/api/src/providers/index.ts`: provider resolver, switching logic for fake/hive/chatgpt providers, and config-based provider factory.
 
 - `apps/api/src/services/text-detect-service.ts`: text detection service flow + explanation mapping.
@@ -52,6 +52,7 @@
 - `apps/api/tests/health.test.ts`: health endpoint test.
 - `apps/api/tests/schemas.test.ts`: schema validation behavior test.
 - `apps/api/tests/provider.test.ts`: provider output range normalization test.
+- `apps/api/tests/chatgpt-provider-logging.test.ts`: verifies ChatGPT provider logs raw upstream response body.
 - `apps/api/tests/detect-text.test.ts`: text detection endpoint behavior test.
 - `apps/api/tests/detect-image.test.ts`: image detection endpoint behavior test.
 - `apps/api/tests/explanation-service.test.ts`: explanation generation test.
@@ -69,9 +70,9 @@
 - `apps/web/index.html`: Vite HTML entry that mounts the React root container.
 
 - `apps/web/src/main.tsx`: React client entrypoint that mounts `<App />` to `#root`.
-- `apps/web/src/App.tsx`: main UI container and detect flow orchestration, including request error feedback banner.
+- `apps/web/src/App.tsx`: main UI container and detect flow orchestration, including request error feedback banner and in-result loading indicator during detection.
 - `apps/web/src/App.css`: editorial-style page layout, color system, motion, and responsive UI rules.
-- `apps/web/src/App.test.tsx`: base render/content test for UI shell.
+- `apps/web/src/App.test.tsx`: UI render/content tests plus loading-state and button-disable behavior tests.
 - `apps/web/src/test-setup.ts`: test environment setup (`jest-dom` matchers).
 
 - `apps/web/src/lib/api.ts`: frontend API client functions and result types.
