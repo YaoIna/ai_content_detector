@@ -37,7 +37,7 @@
 - `apps/api/src/app.ts`: app factory, route wiring, request/error logging, plugin registration.
 
 - `apps/api/src/errors/api-error.ts`: API error class and error-to-response mapper, supporting passthrough payloads for upstream errors.
-- `apps/api/src/plugins/rate-limit.ts`: global in-memory rate-limiting hook.
+- `apps/api/src/plugins/rate-limit.ts`: global in-memory rate-limiting hook with env-driven config (`RATE_LIMIT_MAX`, `RATE_LIMIT_WINDOW_MS`) and per-app isolated buckets.
 - `apps/api/src/schemas/detect.ts`: request payload validation schemas.
 
 - `apps/api/src/providers/types.ts`: provider interface/contracts.
