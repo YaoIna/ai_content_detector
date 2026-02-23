@@ -30,10 +30,11 @@ function providerFromEnv() {
 }
 
 export function buildApp(options: BuildAppOptions = {}) {
-  const app = Fastify();
+  const app = Fastify({ logger: true });
   const provider = options.provider ?? providerFromEnv();
 
-  app.setErrorHandler((error, _request, reply) => {
+  app.setErrorHandler((error, request, reply) => {
+    request.log.error(error);
     const mapped = mapError(error);
     return reply.status(mapped.statusCode).send(mapped.payload);
   });

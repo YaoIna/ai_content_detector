@@ -1,3 +1,4 @@
+import { ApiError } from '../errors/api-error';
 import type { DetectProviderResult } from './types';
 
 type ChatgptProviderConfig = {
@@ -6,16 +7,36 @@ type ChatgptProviderConfig = {
   model?: string;
 };
 
+type ParsedJudgeOutput = {
+  ai_probability?: number;
+  signals?: string[];
+};
+
+type ResponsesApiOutputItem = {
+  type?: string;
+  content?: Array<{
+    type?: string;
+    text?: string;
+  }>;
+};
+
+type ResponsesApiPayload = {
+  output_text?: string;
+  output?: ResponsesApiOutputItem[];
+};
+
 function requireChatgptApiKey(apiKey?: string) {
   if (!apiKey) {
-    throw new Error('ChatGPT API key is required for chatgpt provider');
+    throw new ApiError(500, 'PROVIDER_CONFIG_ERROR', 'ChatGPT API key is required for chatgpt provider');
   }
 }
 
 function normalizeProbability(value: unknown): number {
   const numeric = typeof value === 'number' ? value : Number(value);
   if (!Number.isFinite(numeric)) return 50;
-  return Math.max(0, Math.min(100, Math.round(numeric)));
+
+  const normalized = numeric >= 0 && numeric <= 1 ? numeric * 100 : numeric;
+  return Math.max(0, Math.min(100, Math.round(normalized)));
 }
 
 function normalizeSignals(value: unknown): string[] {
@@ -24,13 +45,88 @@ function normalizeSignals(value: unknown): string[] {
   return list.length > 0 ? list : ['Model-based heuristic assessment'];
 }
 
+function logRawResponse(endpoint: string, status: number, bodyText: string) {
+  console.info(`[chatgpt][raw-response] endpoint=${endpoint} status=${status} body=${bodyText}`);
+}
+
+async function readAndLogRawResponse(response: Response, endpoint: string): Promise<string> {
+  const bodyText = await response.text();
+  logRawResponse(endpoint, response.status, bodyText);
+  return bodyText;
+}
+
+function parseUpstreamErrorPayload(rawPayload: string): unknown {
+  try {
+    return JSON.parse(rawPayload);
+  } catch {
+    return { error: rawPayload };
+  }
+}
+
+function stripJsonCodeFence(value: string): string {
+  const trimmed = value.trim();
+  const match = trimmed.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
+  return match ? match[1].trim() : trimmed;
+}
+
+function parseJudgeOutputJson(value: string): ParsedJudgeOutput {
+  const candidate = stripJsonCodeFence(value);
+
+  try {
+    return JSON.parse(candidate) as ParsedJudgeOutput;
+  } catch {
+    const objectLike = candidate.match(/\{[\s\S]*\}/)?.[0];
+    if (!objectLike) return {};
+
+    try {
+      return JSON.parse(objectLike) as ParsedJudgeOutput;
+    } catch {
+      return {};
+    }
+  }
+}
+
+function extractOutputText(payload: ResponsesApiPayload): string {
+  if (typeof payload.output_text === 'string' && payload.output_text.trim().length > 0) {
+    return payload.output_text;
+  }
+
+  if (!Array.isArray(payload.output)) return '{}';
+
+  for (const item of payload.output) {
+    if (!Array.isArray(item.content)) continue;
+
+    for (const content of item.content) {
+      if (content.type === 'output_text' && typeof content.text === 'string' && content.text.trim().length > 0) {
+        return content.text;
+      }
+    }
+  }
+
+  return '{}';
+}
+
+function parseDetectionFromRawPayload(rawPayload: string): ParsedJudgeOutput {
+  let payload: ResponsesApiPayload;
+
+  try {
+    payload = JSON.parse(rawPayload) as ResponsesApiPayload;
+  } catch {
+    return {};
+  }
+
+  const outputText = extractOutputText(payload);
+  return parseJudgeOutputJson(outputText);
+}
+
 export async function chatgptTextDetect(text: string, config: ChatgptProviderConfig): Promise<DetectProviderResult> {
   requireChatgptApiKey(config.apiKey);
 
   const baseUrl = config.baseUrl ?? 'https://api.openai.com/v1';
   const model = config.model ?? 'gpt-4.1-mini';
+  const endpoint = `${baseUrl}/responses`;
 
-  const response = await fetch(`${baseUrl}/responses`, {
+  const response = await fetch(endpoint, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -56,13 +152,13 @@ export async function chatgptTextDetect(text: string, config: ChatgptProviderCon
     })
   });
 
+  const rawPayload = await readAndLogRawResponse(response, endpoint);
+
   if (!response.ok) {
-    throw new Error(`ChatGPT text detection failed with status ${response.status}`);
+    throw new ApiError(502, 'UPSTREAM_ERROR', 'Upstream provider request failed', parseUpstreamErrorPayload(rawPayload));
   }
 
-  const payload = (await response.json()) as { output_text?: string };
-  const raw = payload.output_text ?? '{}';
-  const parsed = JSON.parse(raw) as { ai_probability?: number; signals?: string[] };
+  const parsed = parseDetectionFromRawPayload(rawPayload);
 
   return {
     aiProbability: normalizeProbability(parsed.ai_probability),
@@ -75,9 +171,10 @@ export async function chatgptImageDetect(buffer: Buffer, config: ChatgptProvider
 
   const baseUrl = config.baseUrl ?? 'https://api.openai.com/v1';
   const model = config.model ?? 'gpt-4.1-mini';
+  const endpoint = `${baseUrl}/responses`;
   const imageBase64 = buffer.toString('base64');
 
-  const response = await fetch(`${baseUrl}/responses`, {
+  const response = await fetch(endpoint, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -109,13 +206,13 @@ export async function chatgptImageDetect(buffer: Buffer, config: ChatgptProvider
     })
   });
 
+  const rawPayload = await readAndLogRawResponse(response, endpoint);
+
   if (!response.ok) {
-    throw new Error(`ChatGPT image detection failed with status ${response.status}`);
+    throw new ApiError(502, 'UPSTREAM_ERROR', 'Upstream provider request failed', parseUpstreamErrorPayload(rawPayload));
   }
 
-  const payload = (await response.json()) as { output_text?: string };
-  const raw = payload.output_text ?? '{}';
-  const parsed = JSON.parse(raw) as { ai_probability?: number; signals?: string[] };
+  const parsed = parseDetectionFromRawPayload(rawPayload);
 
   return {
     aiProbability: normalizeProbability(parsed.ai_probability),

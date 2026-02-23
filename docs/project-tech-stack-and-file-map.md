@@ -11,6 +11,7 @@
 - Package manager: pnpm (workspace monorepo)
 - Language: TypeScript
 - API: Fastify + multipart upload handling
+- Networking: undici (global ProxyAgent for backend outbound requests)
 - Web: React + Vite
 - Testing: Vitest + Supertest + Testing Library + happy-dom
 
@@ -30,17 +31,18 @@
 - `apps/api/tsconfig.json`: TypeScript config for API source/tests.
 - `apps/api/vitest.config.ts`: Vitest config for API tests.
 
-- `apps/api/src/server.ts`: API process entrypoint (starts Fastify server).
-- `apps/api/src/app.ts`: app factory, route wiring, error handling, plugin registration.
+- `apps/api/src/server.ts`: API process entrypoint (loads project-root .env, applies global outbound proxy, and starts Fastify server).
+- `apps/api/src/network-proxy.ts`: backend outgoing-proxy resolver and undici global dispatcher setup (supports CHATGPT_PROXY_URL/HTTPS_PROXY/HTTP_PROXY with local default).
+- `apps/api/src/app.ts`: app factory, route wiring, request/error logging, plugin registration.
 
-- `apps/api/src/errors/api-error.ts`: API error class and error-to-response mapper.
+- `apps/api/src/errors/api-error.ts`: API error class and error-to-response mapper, supporting passthrough payloads for upstream errors.
 - `apps/api/src/plugins/rate-limit.ts`: global in-memory rate-limiting hook.
 - `apps/api/src/schemas/detect.ts`: request payload validation schemas.
 
 - `apps/api/src/providers/types.ts`: provider interface/contracts.
 - `apps/api/src/providers/fake-provider.ts`: fake text/image detection provider implementation.
 - `apps/api/src/providers/hive-provider.ts`: Hive provider skeleton with API-key validation and placeholder calls.
-- `apps/api/src/providers/chatgpt-provider.ts`: ChatGPT-based text/image judging provider for prototype detection results.
+- `apps/api/src/providers/chatgpt-provider.ts`: ChatGPT-based text/image judging provider for prototype detection results, including raw upstream response logging, robust parsing for both `output_text` and `output[].content[].text` shapes, and decimal probability normalization (`0.9` -> `90`).
 - `apps/api/src/providers/index.ts`: provider resolver, switching logic for fake/hive/chatgpt providers, and config-based provider factory.
 
 - `apps/api/src/services/text-detect-service.ts`: text detection service flow + explanation mapping.
@@ -50,6 +52,7 @@
 - `apps/api/tests/health.test.ts`: health endpoint test.
 - `apps/api/tests/schemas.test.ts`: schema validation behavior test.
 - `apps/api/tests/provider.test.ts`: provider output range normalization test.
+- `apps/api/tests/chatgpt-provider-logging.test.ts`: verifies ChatGPT provider logs raw upstream response body.
 - `apps/api/tests/detect-text.test.ts`: text detection endpoint behavior test.
 - `apps/api/tests/detect-image.test.ts`: image detection endpoint behavior test.
 - `apps/api/tests/explanation-service.test.ts`: explanation generation test.
@@ -63,13 +66,13 @@
 
 - `apps/web/package.json`: Web package scripts and dependencies.
 - `apps/web/tsconfig.json`: TypeScript config for React app/tests.
-- `apps/web/vite.config.ts`: Vite + Vitest config for frontend.
+- `apps/web/vite.config.ts`: Vite + Vitest config for frontend, including /api proxy to backend in local dev.
 - `apps/web/index.html`: Vite HTML entry that mounts the React root container.
 
 - `apps/web/src/main.tsx`: React client entrypoint that mounts `<App />` to `#root`.
-- `apps/web/src/App.tsx`: main UI container and detect flow orchestration.
+- `apps/web/src/App.tsx`: main UI container and detect flow orchestration, including request error feedback banner and in-result loading indicator during detection.
 - `apps/web/src/App.css`: editorial-style page layout, color system, motion, and responsive UI rules.
-- `apps/web/src/App.test.tsx`: base render/content test for UI shell.
+- `apps/web/src/App.test.tsx`: UI render/content tests plus loading-state and button-disable behavior tests.
 - `apps/web/src/test-setup.ts`: test environment setup (`jest-dom` matchers).
 
 - `apps/web/src/lib/api.ts`: frontend API client functions and result types.

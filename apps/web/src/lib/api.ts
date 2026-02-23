@@ -6,6 +6,15 @@ export type DetectResult = {
   disclaimer: string;
 };
 
+async function readApiError(response: Response, fallback: string) {
+  try {
+    const payload = (await response.json()) as { message?: string; error?: string };
+    return payload.message ?? payload.error ?? fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 export async function detectText(text: string): Promise<DetectResult> {
   const response = await fetch('/api/detect/text', {
     method: 'POST',
@@ -14,7 +23,7 @@ export async function detectText(text: string): Promise<DetectResult> {
   });
 
   if (!response.ok) {
-    throw new Error('Text detection failed');
+    throw new Error(await readApiError(response, 'Text detection failed'));
   }
 
   return response.json();
@@ -30,7 +39,7 @@ export async function detectImage(file: File): Promise<DetectResult> {
   });
 
   if (!response.ok) {
-    throw new Error('Image detection failed');
+    throw new Error(await readApiError(response, 'Image detection failed'));
   }
 
   return response.json();
