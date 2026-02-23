@@ -35,7 +35,7 @@
 - `apps/api/src/network-proxy.ts`: backend outgoing-proxy resolver and undici global dispatcher setup (supports CHATGPT_PROXY_URL/HTTPS_PROXY/HTTP_PROXY with local default).
 - `apps/api/src/app.ts`: app factory, route wiring, request/error logging, plugin registration.
 
-- `apps/api/src/errors/api-error.ts`: API error class and error-to-response mapper.
+- `apps/api/src/errors/api-error.ts`: API error class and error-to-response mapper, supporting passthrough payloads for upstream errors.
 - `apps/api/src/plugins/rate-limit.ts`: global in-memory rate-limiting hook.
 - `apps/api/src/schemas/detect.ts`: request payload validation schemas.
 

@@ -1,3 +1,4 @@
+import { ApiError } from '../errors/api-error';
 import type { DetectProviderResult } from './types';
 
 type ChatgptProviderConfig = {
@@ -26,7 +27,7 @@ type ResponsesApiPayload = {
 
 function requireChatgptApiKey(apiKey?: string) {
   if (!apiKey) {
-    throw new Error('ChatGPT API key is required for chatgpt provider');
+    throw new ApiError(500, 'PROVIDER_CONFIG_ERROR', 'ChatGPT API key is required for chatgpt provider');
   }
 }
 
@@ -44,11 +45,6 @@ function normalizeSignals(value: unknown): string[] {
   return list.length > 0 ? list : ['Model-based heuristic assessment'];
 }
 
-function formatUpstreamError(endpoint: string, status: number, bodyText: string) {
-  const compact = bodyText.replace(/\s+/g, ' ').slice(0, 600);
-  return `ChatGPT upstream error: POST ${endpoint} -> ${status}; body=${compact}`;
-}
-
 function logRawResponse(endpoint: string, status: number, bodyText: string) {
   console.info(`[chatgpt][raw-response] endpoint=${endpoint} status=${status} body=${bodyText}`);
 }
@@ -57,6 +53,14 @@ async function readAndLogRawResponse(response: Response, endpoint: string): Prom
   const bodyText = await response.text();
   logRawResponse(endpoint, response.status, bodyText);
   return bodyText;
+}
+
+function parseUpstreamErrorPayload(rawPayload: string): unknown {
+  try {
+    return JSON.parse(rawPayload);
+  } catch {
+    return { error: rawPayload };
+  }
 }
 
 function stripJsonCodeFence(value: string): string {
@@ -151,7 +155,7 @@ export async function chatgptTextDetect(text: string, config: ChatgptProviderCon
   const rawPayload = await readAndLogRawResponse(response, endpoint);
 
   if (!response.ok) {
-    throw new Error(formatUpstreamError(endpoint, response.status, rawPayload));
+    throw new ApiError(502, 'UPSTREAM_ERROR', 'Upstream provider request failed', parseUpstreamErrorPayload(rawPayload));
   }
 
   const parsed = parseDetectionFromRawPayload(rawPayload);
@@ -205,7 +209,7 @@ export async function chatgptImageDetect(buffer: Buffer, config: ChatgptProvider
   const rawPayload = await readAndLogRawResponse(response, endpoint);
 
   if (!response.ok) {
-    throw new Error(formatUpstreamError(endpoint, response.status, rawPayload));
+    throw new ApiError(502, 'UPSTREAM_ERROR', 'Upstream provider request failed', parseUpstreamErrorPayload(rawPayload));
   }
 
   const parsed = parseDetectionFromRawPayload(rawPayload);

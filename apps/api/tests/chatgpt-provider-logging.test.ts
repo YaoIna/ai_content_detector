@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { ApiError } from '../src/errors/api-error';
 import { chatgptTextDetect } from '../src/providers/chatgpt-provider';
 
 describe('chatgpt provider raw response logging', () => {
@@ -82,5 +83,38 @@ describe('chatgpt provider raw response logging', () => {
     });
 
     expect(result.aiProbability).toBe(90);
+  });
+
+  it('throws unified ApiError and preserves upstream payload', async () => {
+    const upstreamPayload = {
+      error: {
+        message: 'You exceeded your current quota.',
+        type: 'insufficient_quota',
+        code: 'insufficient_quota'
+      }
+    };
+
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify(upstreamPayload), {
+          status: 429,
+          headers: { 'Content-Type': 'application/json' }
+        })
+      )
+    );
+
+    try {
+      await chatgptTextDetect('This is a long enough sample text for upstream error normalization test.', {
+        apiKey: 'test-key'
+      });
+      throw new Error('expected chatgptTextDetect to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(ApiError);
+      const apiError = error as ApiError;
+      expect(apiError.statusCode).toBe(502);
+      expect(apiError.code).toBe('UPSTREAM_ERROR');
+      expect(apiError.payload).toEqual(upstreamPayload);
+    }
   });
 });
