@@ -30,8 +30,8 @@
 - `apps/api/tsconfig.json`: TypeScript config for API source/tests.
 - `apps/api/vitest.config.ts`: Vitest config for API tests.
 
-- `apps/api/src/server.ts`: API process entrypoint (starts Fastify server).
-- `apps/api/src/app.ts`: app factory, route wiring, error handling, plugin registration.
+- `apps/api/src/server.ts`: API process entrypoint (loads project-root .env explicitly and starts Fastify server).
+- `apps/api/src/app.ts`: app factory, route wiring, request/error logging, plugin registration.
 
 - `apps/api/src/errors/api-error.ts`: API error class and error-to-response mapper.
 - `apps/api/src/plugins/rate-limit.ts`: global in-memory rate-limiting hook.
@@ -63,11 +63,11 @@
 
 - `apps/web/package.json`: Web package scripts and dependencies.
 - `apps/web/tsconfig.json`: TypeScript config for React app/tests.
-- `apps/web/vite.config.ts`: Vite + Vitest config for frontend.
+- `apps/web/vite.config.ts`: Vite + Vitest config for frontend, including /api proxy to backend in local dev.
 - `apps/web/index.html`: Vite HTML entry that mounts the React root container.
 
 - `apps/web/src/main.tsx`: React client entrypoint that mounts `<App />` to `#root`.
-- `apps/web/src/App.tsx`: main UI container and detect flow orchestration.
+- `apps/web/src/App.tsx`: main UI container and detect flow orchestration, including request error feedback banner.
 - `apps/web/src/App.css`: editorial-style page layout, color system, motion, and responsive UI rules.
 - `apps/web/src/App.test.tsx`: base render/content test for UI shell.
 - `apps/web/src/test-setup.ts`: test environment setup (`jest-dom` matchers).

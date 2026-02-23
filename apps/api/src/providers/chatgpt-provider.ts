@@ -24,13 +24,19 @@ function normalizeSignals(value: unknown): string[] {
   return list.length > 0 ? list : ['Model-based heuristic assessment'];
 }
 
+function formatUpstreamError(endpoint: string, status: number, bodyText: string) {
+  const compact = bodyText.replace(/\s+/g, ' ').slice(0, 600);
+  return `ChatGPT upstream error: POST ${endpoint} -> ${status}; body=${compact}`;
+}
+
 export async function chatgptTextDetect(text: string, config: ChatgptProviderConfig): Promise<DetectProviderResult> {
   requireChatgptApiKey(config.apiKey);
 
   const baseUrl = config.baseUrl ?? 'https://api.openai.com/v1';
   const model = config.model ?? 'gpt-4.1-mini';
+  const endpoint = `${baseUrl}/responses`;
 
-  const response = await fetch(`${baseUrl}/responses`, {
+  const response = await fetch(endpoint, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -57,7 +63,8 @@ export async function chatgptTextDetect(text: string, config: ChatgptProviderCon
   });
 
   if (!response.ok) {
-    throw new Error(`ChatGPT text detection failed with status ${response.status}`);
+    const bodyText = await response.text();
+    throw new Error(formatUpstreamError(endpoint, response.status, bodyText));
   }
 
   const payload = (await response.json()) as { output_text?: string };
@@ -75,9 +82,10 @@ export async function chatgptImageDetect(buffer: Buffer, config: ChatgptProvider
 
   const baseUrl = config.baseUrl ?? 'https://api.openai.com/v1';
   const model = config.model ?? 'gpt-4.1-mini';
+  const endpoint = `${baseUrl}/responses`;
   const imageBase64 = buffer.toString('base64');
 
-  const response = await fetch(`${baseUrl}/responses`, {
+  const response = await fetch(endpoint, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -110,7 +118,8 @@ export async function chatgptImageDetect(buffer: Buffer, config: ChatgptProvider
   });
 
   if (!response.ok) {
-    throw new Error(`ChatGPT image detection failed with status ${response.status}`);
+    const bodyText = await response.text();
+    throw new Error(formatUpstreamError(endpoint, response.status, bodyText));
   }
 
   const payload = (await response.json()) as { output_text?: string };
