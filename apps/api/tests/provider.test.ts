@@ -19,3 +19,17 @@ it('uses hive skeleton for text when configured and fake for image fallback', as
   expect(imageResult.aiProbability).toBeGreaterThanOrEqual(0);
   expect(imageResult.aiProbability).toBeLessThanOrEqual(100);
 });
+
+it('uses llm provider for text when configured and fake for image fallback', async () => {
+  const provider = createProviderFromConfig({
+    textProvider: 'llm',
+    imageProvider: 'fake',
+    llmApiKey: ''
+  });
+
+  await expect(provider.detectText('hello world')).rejects.toThrow(/llm api key/i);
+
+  const imageResult = await provider.detectImage(Buffer.from('abc'));
+  expect(imageResult.aiProbability).toBeGreaterThanOrEqual(0);
+  expect(imageResult.aiProbability).toBeLessThanOrEqual(100);
+});

@@ -13,14 +13,19 @@ type BuildAppOptions = {
 };
 
 function envProviderKind(value: string | undefined): ProviderKind {
-  return value === 'hive' ? 'hive' : 'fake';
+  if (value === 'hive') return 'hive';
+  if (value === 'llm') return 'llm';
+  return 'fake';
 }
 
 function providerFromEnv() {
   return createProviderFromConfig({
     textProvider: envProviderKind(process.env.TEXT_PROVIDER),
     imageProvider: envProviderKind(process.env.IMAGE_PROVIDER),
-    hiveApiKey: process.env.HIVE_API_KEY
+    hiveApiKey: process.env.HIVE_API_KEY,
+    llmApiKey: process.env.LLM_API_KEY,
+    llmBaseUrl: process.env.LLM_BASE_URL,
+    llmModel: process.env.LLM_MODEL
   });
 }
 

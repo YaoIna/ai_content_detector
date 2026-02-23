@@ -1,13 +1,17 @@
 import { fakeImageDetect, fakeTextDetect } from './fake-provider';
 import { hiveImageDetect, hiveTextDetect } from './hive-provider';
+import { llmImageDetect, llmTextDetect } from './llm-judge-provider';
 import type { DetectProvider } from './types';
 
-export type ProviderKind = 'fake' | 'hive';
+export type ProviderKind = 'fake' | 'hive' | 'llm';
 
 export type ProviderConfig = {
   textProvider?: ProviderKind;
   imageProvider?: ProviderKind;
   hiveApiKey?: string;
+  llmApiKey?: string;
+  llmBaseUrl?: string;
+  llmModel?: string;
 };
 
 const defaultProvider: DetectProvider = {
@@ -24,11 +28,25 @@ export function createProviderFromConfig(config: ProviderConfig = {}): DetectPro
       if (textProvider === 'hive') {
         return hiveTextDetect(input, config.hiveApiKey);
       }
+      if (textProvider === 'llm') {
+        return llmTextDetect(input, {
+          apiKey: config.llmApiKey,
+          baseUrl: config.llmBaseUrl,
+          model: config.llmModel
+        });
+      }
       return fakeTextDetect(input);
     },
     detectImage: (input: Buffer) => {
       if (imageProvider === 'hive') {
         return hiveImageDetect(input, config.hiveApiKey);
+      }
+      if (imageProvider === 'llm') {
+        return llmImageDetect(input, {
+          apiKey: config.llmApiKey,
+          baseUrl: config.llmBaseUrl,
+          model: config.llmModel
+        });
       }
       return fakeImageDetect(input);
     }
