@@ -1,17 +1,17 @@
+import { chatgptImageDetect, chatgptTextDetect } from './chatgpt-provider';
 import { fakeImageDetect, fakeTextDetect } from './fake-provider';
 import { hiveImageDetect, hiveTextDetect } from './hive-provider';
-import { llmImageDetect, llmTextDetect } from './llm-judge-provider';
 import type { DetectProvider } from './types';
 
-export type ProviderKind = 'fake' | 'hive' | 'llm';
+export type ProviderKind = 'fake' | 'hive' | 'chatgpt';
 
 export type ProviderConfig = {
   textProvider?: ProviderKind;
   imageProvider?: ProviderKind;
   hiveApiKey?: string;
-  llmApiKey?: string;
-  llmBaseUrl?: string;
-  llmModel?: string;
+  chatgptApiKey?: string;
+  chatgptBaseUrl?: string;
+  chatgptModel?: string;
 };
 
 const defaultProvider: DetectProvider = {
@@ -28,11 +28,11 @@ export function createProviderFromConfig(config: ProviderConfig = {}): DetectPro
       if (textProvider === 'hive') {
         return hiveTextDetect(input, config.hiveApiKey);
       }
-      if (textProvider === 'llm') {
-        return llmTextDetect(input, {
-          apiKey: config.llmApiKey,
-          baseUrl: config.llmBaseUrl,
-          model: config.llmModel
+      if (textProvider === 'chatgpt') {
+        return chatgptTextDetect(input, {
+          apiKey: config.chatgptApiKey,
+          baseUrl: config.chatgptBaseUrl,
+          model: config.chatgptModel
         });
       }
       return fakeTextDetect(input);
@@ -41,11 +41,11 @@ export function createProviderFromConfig(config: ProviderConfig = {}): DetectPro
       if (imageProvider === 'hive') {
         return hiveImageDetect(input, config.hiveApiKey);
       }
-      if (imageProvider === 'llm') {
-        return llmImageDetect(input, {
-          apiKey: config.llmApiKey,
-          baseUrl: config.llmBaseUrl,
-          model: config.llmModel
+      if (imageProvider === 'chatgpt') {
+        return chatgptImageDetect(input, {
+          apiKey: config.chatgptApiKey,
+          baseUrl: config.chatgptBaseUrl,
+          model: config.chatgptModel
         });
       }
       return fakeImageDetect(input);

@@ -21,7 +21,7 @@
 - `package.json`: monorepo root metadata and shared scripts.
 - `pnpm-workspace.yaml`: pnpm workspace package discovery config.
 - `pnpm-lock.yaml`: lockfile for reproducible installs.
-- `.env.example`: environment variable template for local setup.
+- `.env.example`: environment variable template for local setup (including fake/hive/chatgpt provider switching variables).
 - `README.md`: project overview, setup, run/test instructions.
 
 ### API App (`apps/api`)
@@ -40,8 +40,8 @@
 - `apps/api/src/providers/types.ts`: provider interface/contracts.
 - `apps/api/src/providers/fake-provider.ts`: fake text/image detection provider implementation.
 - `apps/api/src/providers/hive-provider.ts`: Hive provider skeleton with API-key validation and placeholder calls.
-- `apps/api/src/providers/llm-judge-provider.ts`: LLM-based text/image judging provider for prototype detection results.
-- `apps/api/src/providers/index.ts`: provider resolver, switching logic for fake/hive/llm providers, and config-based provider factory.
+- `apps/api/src/providers/chatgpt-provider.ts`: ChatGPT-based text/image judging provider for prototype detection results.
+- `apps/api/src/providers/index.ts`: provider resolver, switching logic for fake/hive/chatgpt providers, and config-based provider factory.
 
 - `apps/api/src/services/text-detect-service.ts`: text detection service flow + explanation mapping.
 - `apps/api/src/services/image-detect-service.ts`: image detection flow + temp file cleanup.

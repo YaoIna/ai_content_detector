@@ -1,12 +1,12 @@
 import Fastify from 'fastify';
 import multipart from '@fastify/multipart';
-import type { DetectProvider } from './providers/types';
 import { createProviderFromConfig, type ProviderKind } from './providers';
 import { mapError } from './errors/api-error';
 import { registerRateLimit } from './plugins/rate-limit';
 import { textDetectSchema } from './schemas/detect';
 import { detectImage } from './services/image-detect-service';
 import { detectText } from './services/text-detect-service';
+import type { DetectProvider } from './providers/types';
 
 type BuildAppOptions = {
   provider?: DetectProvider;
@@ -14,7 +14,7 @@ type BuildAppOptions = {
 
 function envProviderKind(value: string | undefined): ProviderKind {
   if (value === 'hive') return 'hive';
-  if (value === 'llm') return 'llm';
+  if (value === 'chatgpt') return 'chatgpt';
   return 'fake';
 }
 
@@ -23,9 +23,9 @@ function providerFromEnv() {
     textProvider: envProviderKind(process.env.TEXT_PROVIDER),
     imageProvider: envProviderKind(process.env.IMAGE_PROVIDER),
     hiveApiKey: process.env.HIVE_API_KEY,
-    llmApiKey: process.env.LLM_API_KEY,
-    llmBaseUrl: process.env.LLM_BASE_URL,
-    llmModel: process.env.LLM_MODEL
+    chatgptApiKey: process.env.CHATGPT_API_KEY,
+    chatgptBaseUrl: process.env.CHATGPT_BASE_URL,
+    chatgptModel: process.env.CHATGPT_MODEL
   });
 }
 

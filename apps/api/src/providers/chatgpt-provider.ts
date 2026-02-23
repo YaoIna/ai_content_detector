@@ -1,14 +1,14 @@
 import type { DetectProviderResult } from './types';
 
-type LlmJudgeConfig = {
+type ChatgptProviderConfig = {
   apiKey?: string;
   baseUrl?: string;
   model?: string;
 };
 
-function requireLlmApiKey(apiKey?: string) {
+function requireChatgptApiKey(apiKey?: string) {
   if (!apiKey) {
-    throw new Error('LLM API key is required for llm provider');
+    throw new Error('ChatGPT API key is required for chatgpt provider');
   }
 }
 
@@ -24,8 +24,8 @@ function normalizeSignals(value: unknown): string[] {
   return list.length > 0 ? list : ['Model-based heuristic assessment'];
 }
 
-export async function llmTextDetect(text: string, config: LlmJudgeConfig): Promise<DetectProviderResult> {
-  requireLlmApiKey(config.apiKey);
+export async function chatgptTextDetect(text: string, config: ChatgptProviderConfig): Promise<DetectProviderResult> {
+  requireChatgptApiKey(config.apiKey);
 
   const baseUrl = config.baseUrl ?? 'https://api.openai.com/v1';
   const model = config.model ?? 'gpt-4.1-mini';
@@ -57,7 +57,7 @@ export async function llmTextDetect(text: string, config: LlmJudgeConfig): Promi
   });
 
   if (!response.ok) {
-    throw new Error(`LLM text detection failed with status ${response.status}`);
+    throw new Error(`ChatGPT text detection failed with status ${response.status}`);
   }
 
   const payload = (await response.json()) as { output_text?: string };
@@ -70,8 +70,8 @@ export async function llmTextDetect(text: string, config: LlmJudgeConfig): Promi
   };
 }
 
-export async function llmImageDetect(buffer: Buffer, config: LlmJudgeConfig): Promise<DetectProviderResult> {
-  requireLlmApiKey(config.apiKey);
+export async function chatgptImageDetect(buffer: Buffer, config: ChatgptProviderConfig): Promise<DetectProviderResult> {
+  requireChatgptApiKey(config.apiKey);
 
   const baseUrl = config.baseUrl ?? 'https://api.openai.com/v1';
   const model = config.model ?? 'gpt-4.1-mini';
@@ -110,7 +110,7 @@ export async function llmImageDetect(buffer: Buffer, config: LlmJudgeConfig): Pr
   });
 
   if (!response.ok) {
-    throw new Error(`LLM image detection failed with status ${response.status}`);
+    throw new Error(`ChatGPT image detection failed with status ${response.status}`);
   }
 
   const payload = (await response.json()) as { output_text?: string };
