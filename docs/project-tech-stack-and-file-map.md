@@ -24,6 +24,7 @@
 - `pnpm-lock.yaml`: lockfile for reproducible installs.
 - `.env.example`: environment variable template for local setup (including fake/hive/chatgpt provider switching variables).
 - `README.md`: project overview, setup, run/test instructions.
+- `scripts/deploy_aws_ec2.sh`: step-by-step EC2 deployment command script with sectioned comments (install, build, PM2, Nginx, verification).
 
 ### API App (`apps/api`)
 
