@@ -91,6 +91,8 @@ server {
     listen 80;
     server_name _;
 
+    client_max_body_size 10m;
+
     root /var/www/ai-detector;
     index index.html;
 

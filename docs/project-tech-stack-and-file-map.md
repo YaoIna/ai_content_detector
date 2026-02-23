@@ -24,7 +24,7 @@
 - `pnpm-lock.yaml`: lockfile for reproducible installs.
 - `.env.example`: environment variable template for local setup (including fake/hive/chatgpt provider switching variables).
 - `README.md`: project overview, setup, run/test instructions.
-- `scripts/deploy_aws_ec2.sh`: step-by-step EC2 deployment command script with sectioned comments (install, build, PM2, Nginx, verification).
+- `scripts/deploy_aws_ec2.sh`: step-by-step EC2 deployment command script with sectioned comments (install, build, PM2, Nginx, verification), including Nginx upload limit (`client_max_body_size 10m`).
 
 ### API App (`apps/api`)
 
@@ -34,7 +34,7 @@
 
 - `apps/api/src/server.ts`: API process entrypoint (loads project-root .env, applies global outbound proxy, and starts Fastify server).
 - `apps/api/src/network-proxy.ts`: backend outgoing-proxy resolver and undici global dispatcher setup (supports CHATGPT_PROXY_URL/HTTPS_PROXY/HTTP_PROXY with local default).
-- `apps/api/src/app.ts`: app factory, route wiring, request/error logging, plugin registration.
+- `apps/api/src/app.ts`: app factory, route wiring, request/error logging, plugin registration, and multipart file upload limit (10MB).
 
 - `apps/api/src/errors/api-error.ts`: API error class and error-to-response mapper, supporting passthrough payloads for upstream errors.
 - `apps/api/src/plugins/rate-limit.ts`: global in-memory rate-limiting hook with env-driven config (`RATE_LIMIT_MAX`, `RATE_LIMIT_WINDOW_MS`) and per-app isolated buckets.

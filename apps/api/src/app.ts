@@ -39,7 +39,11 @@ export function buildApp(options: BuildAppOptions = {}) {
     return reply.status(mapped.statusCode).send(mapped.payload);
   });
 
-  app.register(multipart);
+  app.register(multipart, {
+    limits: {
+      fileSize: 10 * 1024 * 1024
+    }
+  });
   registerRateLimit(app);
 
   app.get('/health', async () => ({ status: 'ok' }));
