@@ -11,6 +11,7 @@
 - Package manager: pnpm (workspace monorepo)
 - Language: TypeScript
 - API: Fastify + multipart upload handling
+- Networking: undici (global ProxyAgent for backend outbound requests)
 - Web: React + Vite
 - Testing: Vitest + Supertest + Testing Library + happy-dom
 
@@ -30,7 +31,8 @@
 - `apps/api/tsconfig.json`: TypeScript config for API source/tests.
 - `apps/api/vitest.config.ts`: Vitest config for API tests.
 
-- `apps/api/src/server.ts`: API process entrypoint (loads project-root .env explicitly and starts Fastify server).
+- `apps/api/src/server.ts`: API process entrypoint (loads project-root .env, applies global outbound proxy, and starts Fastify server).
+- `apps/api/src/network-proxy.ts`: backend outgoing-proxy resolver and undici global dispatcher setup (supports CHATGPT_PROXY_URL/HTTPS_PROXY/HTTP_PROXY with local default).
 - `apps/api/src/app.ts`: app factory, route wiring, request/error logging, plugin registration.
 
 - `apps/api/src/errors/api-error.ts`: API error class and error-to-response mapper.
